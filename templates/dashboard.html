@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - StudyTracker{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="stat-card">
+            <div class="stat-icon bg-blue-500">
+                <i data-lucide="book" class="w-6 h-6"></i>
+            </div>
+            <div>
+                <p class="stat-label">Total Subjects</p>
+                <p class="stat-value">{{ total_subjects }}</p>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon bg-green-500">
+                <i data-lucide="check-circle" class="w-6 h-6"></i>
+            </div>
+            <div>
+                <p class="stat-label">Average Attendance</p>
+                <p class="stat-value">{{ avg_attendance }}%</p>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon bg-purple-500">
+                <i data-lucide="file-text" class="w-6 h-6"></i>
+            </div>
+            <div>
+                <p class="stat-label">Total Notes</p>
+                <p class="stat-value">{{ total_pdfs }}</p>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon bg-yellow-500">
+                <i data-lucide="calendar" class="w-6 h-6"></i>
+            </div>
+            <div>
+                <p class="stat-label">Today's Classes</p>
+                <p class="stat-value">{{ today_classes|length }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">Quick Actions</h2>
+        </div>
+        <div class="card-content">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <a href="{{ url_for('subjects') }}" class="quick-action-btn">
+                    <i data-lucide="plus" class="w-5 h-5"></i>
+                    <span>Add Subject</span>
+                </a>
+                <a href="{{ url_for('attendance') }}" class="quick-action-btn">
+                    <i data-lucide="check" class="w-5 h-5"></i>
+                    <span>Mark Attendance</span>
+                </a>
+                <a href="{{ url_for('timetable') }}" class="quick-action-btn">
+                    <i data-lucide="calendar" class="w-5 h-5"></i>
+                    <span>View Timetable</span>
+                </a>
+                <a href="{{ url_for('notes') }}" class="quick-action-btn">
+                    <i data-lucide="upload" class="w-5 h-5"></i>
+                    <span>Upload Notes</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Subjects Overview -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Subjects Overview</h2>
+                <a href="{{ url_for('subjects') }}" class="text-yellow-400 hover:text-yellow-300 text-sm">View All</a>
+            </div>
+            <div class="card-content">
+                {% if subjects %}
+                    <div class="space-y-4">
+                        {% for subject in subjects[:5] %}
+                            <div class="flex items-center justify-between p-3 bg-gray-800 rounded-lg">
+                                <div>
+                                    <h3 class="font-medium">{{ subject.name }}</h3>
+                                    <p class="text-sm text-gray-400">{{ subject.attended_classes }}/{{ subject.total_classes }} classes</p>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-sm font-medium 
+                                        {% if subject.attendance_percentage >= 90 %}text-green-400
+                                        {% elif subject.attendance_percentage >= subject.required_attendance %}text-yellow-400
+                                        {% else %}text-red-400{% endif %}">
+                                        {{ "%.1f"|format(subject.attendance_percentage) }}%
+                                    </div>
+                                    <div class="w-20 h-2 bg-gray-700 rounded-full mt-1">
+                                        <div class="h-2 rounded-full 
+                                            {% if subject.attendance_percentage >= 90 %}bg-green-400
+                                            {% elif subject.attendance_percentage >= subject.required_attendance %}bg-yellow-400
+                                            {% else %}bg-red-400{% endif %}"
+                                            style="width: {{ subject.attendance_percentage }}%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty-state">
+                        <i data-lucide="book" class="w-12 h-12 text-gray-600 mx-auto mb-4"></i>
+                        <h3 class="text-lg font-medium text-gray-400 mb-2">No subjects yet</h3>
+                        <p class="text-gray-500 mb-4">Start by adding your first subject to track attendance.</p>
+                        <a href="{{ url_for('subjects') }}" class="btn btn-primary">Add Subject</a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Today's Schedule -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Today's Schedule</h2>
+                <a href="{{ url_for('timetable') }}" class="text-yellow-400 hover:text-yellow-300 text-sm">View Timetable</a>
+            </div>
+            <div class="card-content">
+                {% if today_classes %}
+                    <div class="space-y-3">
+                        {% for class in today_classes %}
+                            <div class="flex items-center gap-3 p-3 bg-gray-800 rounded-lg">
+                                <div class="w-2 h-8 bg-yellow-400 rounded-full"></div>
+                                <div class="flex-1">
+                                    <h3 class="font-medium">{{ class.subject_name }}</h3>
+                                    <p class="text-sm text-gray-400">{{ class.time_slot }}</p>
+                                    {% if class.room_number %}
+                                        <p class="text-xs text-gray-500">Room: {{ class.room_number }}</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty-state">
+                        <i data-lucide="calendar" class="w-12 h-12 text-gray-600 mx-auto mb-4"></i>
+                        <h3 class="text-lg font-medium text-gray-400 mb-2">No classes today</h3>
+                        <p class="text-gray-500 mb-4">Enjoy your free day or set up your timetable.</p>
+                        <a href="{{ url_for('timetable') }}" class="btn btn-primary">Setup Timetable</a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

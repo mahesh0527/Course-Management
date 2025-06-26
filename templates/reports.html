@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}Reports - StudyTracker{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="flex items-center justify-between">
+        <h1 class="text-3xl font-bold text-yellow-400">Attendance Reports</h1>
+    </div>
+
+    <!-- Overall Stats -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title flex items-center gap-2">
+                <i data-lucide="trending-up"></i>
+                Overall Attendance
+            </h2>
+        </div>
+        <div class="card-content">
+            <div class="text-center">
+                <div class="text-4xl font-bold text-yellow-400 mb-2">{{ overall_attendance }}%</div>
+                <div class="progress-bar h-4 max-w-md mx-auto">
+                    <div class="progress-fill" style="width: {{ overall_attendance }}%"></div>
+                </div>
+                <p class="text-gray-400 mt-2">Average across all subjects</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Subject-wise Reports -->
+    <div class="subject-grid">
+        {% for report in subject_reports %}
+        <div class="card">
+            <div class="card-header">
+                <h3 class="text-lg text-white flex items-center justify-between">
+                    {{ report.subject.name }}
+                    {% if report.status == 'excellent' %}
+                        <i data-lucide="check-circle" class="text-green-400"></i>
+                    {% elif report.status == 'warning' %}
+                        <i data-lucide="alert-triangle" class="text-yellow-400"></i>
+                    {% else %}
+                        <i data-lucide="check-circle" class="text-blue-400"></i>
+                    {% endif %}
+                </h3>
+            </div>
+            <div class="card-content space-y-4">
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-400">Classes Attended</span>
+                    <span class="text-white font-semibold">
+                        {{ report.subject.attended_classes }}/{{ report.subject.total_classes }}
+                    </span>
+                </div>
+
+                <div class="space-y-2">
+                    <div class="flex justify-between">
+                        <span class="text-gray-400">Attendance</span>
+                        <span class="font-semibold {% if report.percentage >= 80 %}text-green-400{% else %}text-red-400{% endif %}">
+                            {{ report.percentage }}%
+                        </span>
+                    </div>
+                    <div class="progress-bar h-3">
+                        <div class="progress-fill" style="width: {{ report.percentage }}%"></div>
+                    </div>
+                </div>
+
+                {% if report.needed > 0 %}
+                <div class="bg-red-500/10 border border-red-500/30 rounded-lg p-3">
+                    <p class="text-red-400 text-sm">
+                        ⚠️ You need to attend <strong>{{ report.needed }} more classes</strong> to reach {{ report.subject.required_attendance }}% attendance
+                    </p>
+                </div>
+                {% else %}
+                <div class="bg-green-500/10 border border-green-500/30 rounded-lg p-3">
+                    <p class="text-green-400 text-sm">✅ You're meeting the attendance requirement!</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

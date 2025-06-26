@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block title %}Settings - StudyTracker{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="flex items-center justify-between">
+        <h1 class="text-3xl font-bold text-yellow-400">Settings</h1>
+    </div>
+
+    <!-- Profile Settings -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title flex items-center gap-2">
+                <i data-lucide="user"></i>
+                Profile Settings
+            </h2>
+        </div>
+        <div class="card-content">
+            <form method="POST" action="{{ url_for('update_profile') }}" class="space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="form-group">
+                        <label for="full_name" class="form-label">Full Name</label>
+                        <input type="text" id="full_name" name="full_name" class="form-input" value="{{ user.full_name if user else '' }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="email" class="form-label">Email Address</label>
+                        <input type="email" id="email" name="email" class="form-input" value="{{ user.email if user else '' }}">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="username" class="form-label">Username</label>
+                    <input type="text" id="username" name="username" class="form-input" value="{{ user.username if user else '' }}" readonly>
+                    <p class="text-xs text-gray-400 mt-1">Username cannot be changed</p>
+                </div>
+                <button type="submit" class="btn btn-primary">Update Profile</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Security Settings -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title flex items-center gap-2">
+                <i data-lucide="lock"></i>
+                Security
+            </h2>
+        </div>
+        <div class="card-content">
+            <form class="space-y-4">
+                <div class="form-group">
+                    <label for="current_password" class="form-label">Current Password</label>
+                    <input type="password" id="current_password" name="current_password" class="form-input" placeholder="Enter current password">
+                </div>
+                <div class="form-group">
+                    <label for="new_password" class="form-label">New Password</label>
+                    <input type="password" id="new_password" name="new_password" class="form-input" placeholder="Enter new password">
+                </div>
+                <div class="form-group">
+                    <label for="confirm_password" class="form-label">Confirm New Password</label>
+                    <input type="password" id="confirm_password" name="confirm_password" class="form-input" placeholder="Confirm new password">
+                </div>
+                <button type="submit" class="btn btn-primary">Change Password</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Notification Settings -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title flex items-center gap-2">
+                <i data-lucide="bell"></i>
+                Notifications
+            </h2>
+        </div>
+        <div class="card-content">
+            <div class="settings-section">
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <h4>Email Notifications</h4>
+                        <p>Receive notifications via email</p>
+                    </div>
+                    <label class="toggle">
+                        <input type="checkbox" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <h4>Attendance Alerts</h4>
+                        <p>Get alerts when attendance drops below threshold</p>
+                    </div>
+                    <label class="toggle">
+                        <input type="checkbox" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <h4>Weekly Reports</h4>
+                        <p>Receive weekly attendance summary</p>
+                    </div>
+                    <label class="toggle">
+                        <input type="checkbox">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Appearance Settings -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title flex items-center gap-2">
+                <i data-lucide="palette"></i>
+                Appearance
+            </h2>
+        </div>
+        <div class="card-content">
+            <div class="setting-item">
+                <div class="setting-info">
+                    <h4>Dark Mode</h4>
+                    <p>Use dark theme (recommended)</p>
+                </div>
+                <label class="toggle">
+                    <input type="checkbox" checked>
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

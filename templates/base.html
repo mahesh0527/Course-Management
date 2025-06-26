@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}StudyTracker{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-black text-white min-h-screen">
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="fixed top-4 right-4 z-50 space-y-2">
+                {% for category, message in messages %}
+                    <div class="flash-message flash-{{ category }} animate-slide-in">
+                        {{ message }}
+                        <button onclick="this.parentElement.remove()" class="flash-close">×</button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    {% if session.user_id %}
+        <!-- Sidebar -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-lg flex items-center justify-center">
+                        <i data-lucide="book-open" class="w-5 h-5 text-black"></i>
+                    </div>
+                    <span class="font-bold text-yellow-400">StudyTracker</span>
+                </div>
+                <button class="sidebar-toggle" onclick="toggleSidebar()">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="{{ url_for('dashboard') }}" class="nav-item {% if request.endpoint == 'dashboard' %}active{% endif %}">
+                    <i data-lucide="home" class="w-5 h-5"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="{{ url_for('subjects') }}" class="nav-item {% if request.endpoint == 'subjects' %}active{% endif %}">
+                    <i data-lucide="book" class="w-5 h-5"></i>
+                    <span>Subjects</span>
+                </a>
+                <a href="{{ url_for('timetable') }}" class="nav-item {% if request.endpoint == 'timetable' %}active{% endif %}">
+                    <i data-lucide="calendar" class="w-5 h-5"></i>
+                    <span>Timetable</span>
+                </a>
+                <a href="{{ url_for('academic_calendar') }}" class="nav-item {% if request.endpoint == 'academic_calendar' %}active{% endif %}">
+                    <i data-lucide="calendar-days" class="w-5 h-5"></i>
+                    <span>Academic Calendar</span>
+                </a>
+                <a href="{{ url_for('attendance') }}" class="nav-item {% if request.endpoint == 'attendance' %}active{% endif %}">
+                    <i data-lucide="check-circle" class="w-5 h-5"></i>
+                    <span>Attendance</span>
+                </a>
+                <a href="{{ url_for('reports') }}" class="nav-item {% if request.endpoint == 'reports' %}active{% endif %}">
+                    <i data-lucide="bar-chart-3" class="w-5 h-5"></i>
+                    <span>Reports</span>
+                </a>
+                <a href="{{ url_for('notes') }}" class="nav-item {% if request.endpoint == 'notes' %}active{% endif %}">
+                    <i data-lucide="file-text" class="w-5 h-5"></i>
+                    <span>Notes</span>
+                </a>
+                <a href="{{ url_for('route_testing') }}" class="nav-item {% if request.endpoint == 'route_testing' %}active{% endif %}">
+                    <i data-lucide="activity" class="w-5 h-5"></i>
+                    <span>Route Testing</span>
+                </a>
+                <a href="{{ url_for('settings') }}" class="nav-item {% if request.endpoint == 'settings' %}active{% endif %}">
+                    <i data-lucide="settings" class="w-5 h-5"></i>
+                    <span>Settings</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center">
+                        <span class="text-black font-medium text-sm">{{ session.full_name[0] if session.full_name else 'U' }}</span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium truncate">{{ session.full_name or 'User' }}</p>
+                        <p class="text-xs text-gray-400 truncate">{{ session.email or '' }}</p>
+                    </div>
+                </div>
+                <a href="{{ url_for('logout') }}" class="logout-btn" title="Logout">
+                    <i data-lucide="log-out" class="w-4 h-4"></i>
+                </a>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content" id="mainContent">
+            <!-- Header -->
+            <header class="main-header">
+                <div class="flex items-center gap-4">
+                    <button class="sidebar-toggle md:hidden" onclick="toggleSidebar()">
+                        <i data-lucide="menu" class="w-6 h-6"></i>
+                    </button>
+                    <h1 class="text-xl font-semibold">{% block page_title %}Dashboard{% endblock %}</h1>
+                </div>
+                <div class="flex items-center gap-4">
+                    <span class="text-sm text-gray-400">Welcome back, {{ session.full_name or 'User' }}!</span>
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <main class="page-content">
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+
+        <!-- Mobile Sidebar Overlay -->
+        <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+    {% else %}
+        <!-- Content for non-authenticated users -->
+        {% block content %}{% endblock %}
+    {% endif %}
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+        lucide.createIcons();
+        
+        // Auto-hide flash messages
+        setTimeout(function() {
+            const flashMessages = document.querySelectorAll('.flash-message');
+            flashMessages.forEach(function(message) {
+                message.style.opacity = '0';
+                setTimeout(function() {
+                    message.remove();
+                }, 300);
+            });
+        }, 5000);
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>
