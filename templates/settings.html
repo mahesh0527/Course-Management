@@ -1,134 +1,214 @@
 {% extends "base.html" %}
 
 {% block title %}Settings - StudyTracker{% endblock %}
+{% block page_title %}Settings{% endblock %}
 
 {% block content %}
-<div class="space-y-6">
-    <div class="flex items-center justify-between">
-        <h1 class="text-3xl font-bold text-yellow-400">Settings</h1>
+<div class="fade-in">
+    <!-- Header -->
+    <div class="mb-8">
+        <h2 class="text-2xl font-bold text-primary mb-2">Account Settings</h2>
+        <p class="text-muted">Manage your profile and account preferences</p>
     </div>
 
-    <!-- Profile Settings -->
-    <div class="card">
-        <div class="card-header">
-            <h2 class="card-title flex items-center gap-2">
-                <i data-lucide="user"></i>
-                Profile Settings
-            </h2>
-        </div>
-        <div class="card-content">
-            <form method="POST" action="{{ url_for('update_profile') }}" class="space-y-4">
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="form-group">
-                        <label for="full_name" class="form-label">Full Name</label>
-                        <input type="text" id="full_name" name="full_name" class="form-input" value="{{ user.full_name if user else '' }}">
-                    </div>
-                    <div class="form-group">
-                        <label for="email" class="form-label">Email Address</label>
-                        <input type="email" id="email" name="email" class="form-input" value="{{ user.email if user else '' }}">
-                    </div>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Profile Settings -->
+        <div class="lg:col-span-2 space-y-8">
+            <!-- Profile Information -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Profile Information</h3>
+                    <p class="card-subtitle">Update your personal details</p>
                 </div>
-                <div class="form-group">
-                    <label for="username" class="form-label">Username</label>
-                    <input type="text" id="username" name="username" class="form-input" value="{{ user.username if user else '' }}" readonly>
-                    <p class="text-xs text-gray-400 mt-1">Username cannot be changed</p>
-                </div>
-                <button type="submit" class="btn btn-primary">Update Profile</button>
-            </form>
-        </div>
-    </div>
+                <div class="card-content">
+                    <form action="{{ url_for('update_profile') }}" method="POST">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="form-group">
+                                <label class="form-label" for="full_name">Full Name *</label>
+                                <input type="text" id="full_name" name="full_name" class="form-input" value="{{ user.full_name }}" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="email">Email Address *</label>
+                                <input type="email" id="email" name="email" class="form-input" value="{{ user.email }}" required>
+                            </div>
+                        </div>
 
-    <!-- Security Settings -->
-    <div class="card">
-        <div class="card-header">
-            <h2 class="card-title flex items-center gap-2">
-                <i data-lucide="lock"></i>
-                Security
-            </h2>
-        </div>
-        <div class="card-content">
-            <form class="space-y-4">
-                <div class="form-group">
-                    <label for="current_password" class="form-label">Current Password</label>
-                    <input type="password" id="current_password" name="current_password" class="form-input" placeholder="Enter current password">
-                </div>
-                <div class="form-group">
-                    <label for="new_password" class="form-label">New Password</label>
-                    <input type="password" id="new_password" name="new_password" class="form-input" placeholder="Enter new password">
-                </div>
-                <div class="form-group">
-                    <label for="confirm_password" class="form-label">Confirm New Password</label>
-                    <input type="password" id="confirm_password" name="confirm_password" class="form-input" placeholder="Confirm new password">
-                </div>
-                <button type="submit" class="btn btn-primary">Change Password</button>
-            </form>
-        </div>
-    </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="form-group">
+                                <label class="form-label" for="student_id">Student ID</label>
+                                <input type="text" id="student_id" name="student_id" class="form-input" value="{{ user.student_id or '' }}" readonly>
+                                <div class="text-xs text-muted mt-1">Student ID cannot be changed</div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="phone_number">Phone Number</label>
+                                <input type="tel" id="phone_number" name="phone_number" class="form-input" value="{{ user.phone_number or '' }}">
+                            </div>
+                        </div>
 
-    <!-- Notification Settings -->
-    <div class="card">
-        <div class="card-header">
-            <h2 class="card-title flex items-center gap-2">
-                <i data-lucide="bell"></i>
-                Notifications
-            </h2>
-        </div>
-        <div class="card-content">
-            <div class="settings-section">
-                <div class="setting-item">
-                    <div class="setting-info">
-                        <h4>Email Notifications</h4>
-                        <p>Receive notifications via email</p>
-                    </div>
-                    <label class="toggle">
-                        <input type="checkbox" checked>
-                        <span class="toggle-slider"></span>
-                    </label>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="form-group">
+                                <label class="form-label" for="department">Department</label>
+                                <input type="text" id="department" name="department" class="form-input" value="{{ user.department or '' }}">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="year_of_study">Year of Study</label>
+                                <select id="year_of_study" name="year_of_study" class="form-select">
+                                    <option value="">Select Year</option>
+                                    {% for year in range(1, 6) %}
+                                    <option value="{{ year }}" {% if user.year_of_study == year %}selected{% endif %}>Year {{ year }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">
+                            <i data-lucide="save"></i>
+                            Update Profile
+                        </button>
+                    </form>
                 </div>
-                <div class="setting-item">
-                    <div class="setting-info">
-                        <h4>Attendance Alerts</h4>
-                        <p>Get alerts when attendance drops below threshold</p>
-                    </div>
-                    <label class="toggle">
-                        <input type="checkbox" checked>
-                        <span class="toggle-slider"></span>
-                    </label>
+            </div>
+
+            <!-- Change Password -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Change Password</h3>
+                    <p class="card-subtitle">Update your account password</p>
                 </div>
-                <div class="setting-item">
-                    <div class="setting-info">
-                        <h4>Weekly Reports</h4>
-                        <p>Receive weekly attendance summary</p>
-                    </div>
-                    <label class="toggle">
-                        <input type="checkbox">
-                        <span class="toggle-slider"></span>
-                    </label>
+                <div class="card-content">
+                    <form action="{{ url_for('change_password') }}" method="POST">
+                        <div class="form-group">
+                            <label class="form-label" for="current_password">Current Password *</label>
+                            <input type="password" id="current_password" name="current_password" class="form-input" required>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="form-group">
+                                <label class="form-label" for="new_password">New Password *</label>
+                                <input type="password" id="new_password" name="new_password" class="form-input" required minlength="6">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="confirm_password">Confirm New Password *</label>
+                                <input type="password" id="confirm_password" name="confirm_password" class="form-input" required minlength="6">
+                            </div>
+                        </div>
+
+                        <div class="text-xs text-muted mb-4">
+                            Password must be at least 6 characters long
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">
+                            <i data-lucide="lock"></i>
+                            Change Password
+                        </button>
+                    </form>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Appearance Settings -->
-    <div class="card">
-        <div class="card-header">
-            <h2 class="card-title flex items-center gap-2">
-                <i data-lucide="palette"></i>
-                Appearance
-            </h2>
-        </div>
-        <div class="card-content">
-            <div class="setting-item">
-                <div class="setting-info">
-                    <h4>Dark Mode</h4>
-                    <p>Use dark theme (recommended)</p>
+        <!-- Account Overview -->
+        <div class="space-y-6">
+            <!-- Account Stats -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Account Overview</h3>
                 </div>
-                <label class="toggle">
-                    <input type="checkbox" checked>
-                    <span class="toggle-slider"></span>
-                </label>
+                <div class="card-content space-y-4">
+                    <div class="flex items-center justify-between">
+                        <span class="text-muted">Member Since</span>
+                        <span class="text-primary font-medium">{{ user.created_at.strftime('%B %Y') }}</span>
+                    </div>
+                    
+                    <div class="flex items-center justify-between">
+                        <span class="text-muted">Last Login</span>
+                        <span class="text-primary font-medium">
+                            {% if user.last_login %}
+                                {{ user.last_login.strftime('%B %d, %Y') }}
+                            {% else %}
+                                Never
+                            {% endif %}
+                        </span>
+                    </div>
+                    
+                    <div class="flex items-center justify-between">
+                        <span class="text-muted">Login Count</span>
+                        <span class="text-primary font-medium">{{ user.login_count }}</span>
+                    </div>
+                    
+                    <div class="flex items-center justify-between">
+                        <span class="text-muted">Account Status</span>
+                        <span class="text-green-400 font-medium">Active</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Quick Actions</h3>
+                </div>
+                <div class="card-content space-y-3">
+                    <a href="{{ url_for('subjects') }}" class="btn btn-secondary w-full">
+                        <i data-lucide="book-open"></i>
+                        Manage Subjects
+                    </a>
+                    <a href="{{ url_for('timetable') }}" class="btn btn-secondary w-full">
+                        <i data-lucide="calendar"></i>
+                        View Timetable
+                    </a>
+                    <a href="{{ url_for('reports') }}" class="btn btn-secondary w-full">
+                        <i data-lucide="bar-chart-3"></i>
+                        View Reports
+                    </a>
+                    <a href="{{ url_for('generate_report_pdf') }}" class="btn btn-secondary w-full">
+                        <i data-lucide="download"></i>
+                        Download Report
+                    </a>
+                </div>
+            </div>
+
+            <!-- Danger Zone -->
+            <div class="card border-red-500/30">
+                <div class="card-header">
+                    <h3 class="card-title text-red-400">Danger Zone</h3>
+                    <p class="card-subtitle">Irreversible actions</p>
+                </div>
+                <div class="card-content">
+                    <div class="p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
+                        <h4 class="font-medium text-red-400 mb-2">Delete Account</h4>
+                        <p class="text-sm text-muted mb-4">
+                            Permanently delete your account and all associated data. This action cannot be undone.
+                        </p>
+                        <button onclick="confirmDeleteAccount()" class="btn btn-danger btn-sm">
+                            <i data-lucide="trash-2"></i>
+                            Delete Account
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+// Password confirmation validation
+document.getElementById('confirm_password').addEventListener('input', function() {
+    const newPassword = document.getElementById('new_password').value;
+    const confirmPassword = this.value;
+    
+    if (newPassword !== confirmPassword) {
+        this.setCustomValidity('Passwords do not match');
+    } else {
+        this.setCustomValidity('');
+    }
+});
+
+function confirmDeleteAccount() {
+    if (confirm('Are you sure you want to delete your account? This action cannot be undone and will permanently delete all your data.')) {
+        if (confirm('This is your final warning. Are you absolutely sure you want to delete your account?')) {
+            alert('Account deletion functionality to be implemented');
+        }
+    }
+}
+</script>
 {% endblock %}

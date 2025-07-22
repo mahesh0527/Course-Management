@@ -1,254 +1,97 @@
-<!DOCTYPE html>
-<html lang="en" class="dark">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign Up - StudyTracker</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
-</head>
-<body class="bg-black text-white min-h-screen flex items-center justify-center">
-    <div class="auth-container">
-        <div class="auth-card">
-            <div class="text-center space-y-4 mb-8">
-                <div class="w-16 h-16 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-xl flex items-center justify-center mx-auto">
-                    <i data-lucide="book-open" class="w-8 h-8 text-black"></i>
+{% extends "base.html" %}
+
+{% block title %}Sign Up - StudyTracker{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <div class="logo-container mb-6">
+                <div class="logo-icon mx-auto">
+                    <i data-lucide="graduation-cap"></i>
                 </div>
-                <div>
-                    <h1 class="text-2xl font-bold text-yellow-400">Create Account</h1>
-                    <p class="text-gray-400">Join StudyTracker and manage your attendance</p>
+            </div>
+            <h1 class="auth-title">Create Account</h1>
+            <p class="auth-subtitle">Join StudyTracker and manage your academic journey</p>
+        </div>
+
+        <form action="{{ url_for('signup') }}" method="POST" class="space-y-4">
+            <div class="grid grid-cols-2 gap-4">
+                <div class="form-group">
+                    <label class="form-label" for="full_name">Full Name *</label>
+                    <input type="text" id="full_name" name="full_name" class="form-input" required 
+                           placeholder="Your full name" autocomplete="name">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="username">Username *</label>
+                    <input type="text" id="username" name="username" class="form-input" required 
+                           placeholder="Choose a username" autocomplete="username">
                 </div>
             </div>
 
-            <!-- Flash Messages -->
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    <div class="mb-6">
-                        {% for category, message in messages %}
-                            <div class="flash-message flash-{{ category }}">
-                                {{ message }}
-                                <button onclick="this.parentElement.remove()" class="flash-close">×</button>
-                            </div>
-                        {% endfor %}
-                    </div>
-                {% endif %}
-            {% endwith %}
+            <div class="form-group">
+                <label class="form-label" for="email">Email Address *</label>
+                <input type="email" id="email" name="email" class="form-input" required 
+                       placeholder="your.email@example.com" autocomplete="email">
+            </div>
 
-            <div class="space-y-6">
-                <!-- Social Signup Buttons -->
-                <div class="space-y-3">
-                    <button class="social-btn" onclick="showComingSoon('Google')">
-                        <i data-lucide="mail" class="w-5 h-5"></i>
-                        Sign up with Google
-                    </button>
-
-                    <button class="social-btn" onclick="showComingSoon('GitHub')">
-                        <i data-lucide="github" class="w-5 h-5"></i>
-                        Sign up with GitHub
-                    </button>
+            <div class="grid grid-cols-2 gap-4">
+                <div class="form-group">
+                    <label class="form-label" for="password">Password *</label>
+                    <input type="password" id="password" name="password" class="form-input" required 
+                           placeholder="Create a password" autocomplete="new-password">
                 </div>
-
-                <div class="relative">
-                    <div class="absolute inset-0 flex items-center">
-                        <span class="w-full border-t border-gray-600"></span>
-                    </div>
-                    <div class="relative flex justify-center text-xs uppercase">
-                        <span class="bg-black px-2 text-gray-400">Or sign up with email</span>
-                    </div>
-                </div>
-
-                <!-- Signup Form -->
-                <form method="POST" class="space-y-4" onsubmit="return validateForm()">
-                    <div class="space-y-2">
-                        <label for="full_name" class="text-gray-300 text-sm font-medium">Full Name</label>
-                        <input
-                            id="full_name"
-                            name="full_name"
-                            placeholder="Enter your full name"
-                            class="form-input"
-                            required
-                        />
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="space-y-2">
-                            <label for="username" class="text-gray-300 text-sm font-medium">Username</label>
-                            <input
-                                id="username"
-                                name="username"
-                                placeholder="Choose username"
-                                class="form-input"
-                                required
-                            />
-                        </div>
-                        <div class="space-y-2">
-                            <label for="email" class="text-gray-300 text-sm font-medium">Email</label>
-                            <input
-                                id="email"
-                                name="email"
-                                type="email"
-                                placeholder="Enter your email"
-                                class="form-input"
-                                required
-                            />
-                        </div>
-                    </div>
-
-                    <div class="space-y-2">
-                        <label for="password" class="text-gray-300 text-sm font-medium">Password</label>
-                        <div class="relative">
-                            <input
-                                id="password"
-                                name="password"
-                                type="password"
-                                placeholder="Create a strong password"
-                                class="form-input pr-10"
-                                required
-                                oninput="checkPasswordStrength()"
-                            />
-                            <button
-                                type="button"
-                                class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
-                                onclick="togglePassword('password')"
-                            >
-                                <i data-lucide="eye" id="password-eye"></i>
-                            </button>
-                        </div>
-                        <div id="password-strength" class="hidden">
-                            <div class="flex items-center gap-2 mt-1">
-                                <div class="flex-1 h-2 bg-gray-700 rounded-full overflow-hidden">
-                                    <div id="strength-bar" class="h-full transition-all duration-300"></div>
-                                </div>
-                                <span id="strength-text" class="text-xs text-gray-400"></span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="space-y-2">
-                        <label for="confirm_password" class="text-gray-300 text-sm font-medium">Confirm Password</label>
-                        <div class="relative">
-                            <input
-                                id="confirm_password"
-                                name="confirm_password"
-                                type="password"
-                                placeholder="Confirm your password"
-                                class="form-input pr-10"
-                                required
-                            />
-                            <button
-                                type="button"
-                                class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
-                                onclick="togglePassword('confirm_password')"
-                            >
-                                <i data-lucide="eye" id="confirm_password-eye"></i>
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="text-xs text-gray-400 text-center">
-                        By creating an account, you agree to our
-                        <a href="#" class="text-yellow-400 hover:underline">Terms of Service</a>
-                        and
-                        <a href="#" class="text-yellow-400 hover:underline">Privacy Policy</a>
-                    </div>
-
-                    <button type="submit" class="w-full btn btn-primary">
-                        Create Account
-                    </button>
-                </form>
-
-                <div class="text-center text-gray-400">
-                    Already have an account?
-                    <a href="{{ url_for('login') }}" class="text-yellow-400 hover:underline font-medium">Sign in</a>
+                <div class="form-group">
+                    <label class="form-label" for="confirm_password">Confirm Password *</label>
+                    <input type="password" id="confirm_password" name="confirm_password" class="form-input" required 
+                           placeholder="Confirm your password" autocomplete="new-password">
                 </div>
             </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div class="form-group">
+                    <label class="form-label" for="student_id">Student ID</label>
+                    <input type="text" id="student_id" name="student_id" class="form-input" 
+                           placeholder="Your student ID">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="year_of_study">Year of Study</label>
+                    <select id="year_of_study" name="year_of_study" class="form-select">
+                        <option value="">Select year</option>
+                        <option value="1">1st Year</option>
+                        <option value="2">2nd Year</option>
+                        <option value="3">3rd Year</option>
+                        <option value="4">4th Year</option>
+                        <option value="5">5th Year</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div class="form-group">
+                    <label class="form-label" for="department">Department</label>
+                    <input type="text" id="department" name="department" class="form-input" 
+                           placeholder="e.g., Computer Science">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="phone_number">Phone Number</label>
+                    <input type="tel" id="phone_number" name="phone_number" class="form-input" 
+                           placeholder="Your phone number">
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-full">
+                <i data-lucide="user-plus"></i>
+                Create Account
+            </button>
+        </form>
+
+        <div class="mt-6 text-center">
+            <p class="text-sm text-muted">Already have an account?</p>
+            <a href="{{ url_for('login') }}" class="text-accent hover:underline font-semibold">
+                Sign in here
+            </a>
         </div>
     </div>
-
-    <script>
-        lucide.createIcons();
-        
-        function showComingSoon(provider) {
-            alert(`${provider} signup will be available soon!`);
-        }
-        
-        function togglePassword(fieldId) {
-            const field = document.getElementById(fieldId);
-            const eye = document.getElementById(fieldId + '-eye');
-            
-            if (field.type === 'password') {
-                field.type = 'text';
-                eye.setAttribute('data-lucide', 'eye-off');
-            } else {
-                field.type = 'password';
-                eye.setAttribute('data-lucide', 'eye');
-            }
-            lucide.createIcons();
-        }
-        
-        function checkPasswordStrength() {
-            const password = document.getElementById('password').value;
-            const strengthDiv = document.getElementById('password-strength');
-            const strengthBar = document.getElementById('strength-bar');
-            const strengthText = document.getElementById('strength-text');
-            
-            if (password.length === 0) {
-                strengthDiv.classList.add('hidden');
-                return;
-            }
-            
-            strengthDiv.classList.remove('hidden');
-            
-            let score = 0;
-            if (password.length >= 8) score++;
-            if (/[a-z]/.test(password)) score++;
-            if (/[A-Z]/.test(password)) score++;
-            if (/[0-9]/.test(password)) score++;
-            if (/[^A-Za-z0-9]/.test(password)) score++;
-            
-            const levels = [
-                { score: 0, text: "Very Weak", color: "bg-red-500", width: "20%" },
-                { score: 1, text: "Weak", color: "bg-red-400", width: "40%" },
-                { score: 2, text: "Fair", color: "bg-yellow-500", width: "60%" },
-                { score: 3, text: "Good", color: "bg-blue-500", width: "80%" },
-                { score: 4, text: "Strong", color: "bg-green-500", width: "100%" },
-                { score: 5, text: "Very Strong", color: "bg-green-600", width: "100%" }
-            ];
-            
-            const level = levels[score] || levels[0];
-            strengthBar.className = `h-full transition-all duration-300 ${level.color}`;
-            strengthBar.style.width = level.width;
-            strengthText.textContent = level.text;
-        }
-        
-        function validateForm() {
-            const password = document.getElementById('password').value;
-            const confirmPassword = document.getElementById('confirm_password').value;
-            
-            if (password !== confirmPassword) {
-                alert('Passwords do not match!');
-                return false;
-            }
-            
-            if (password.length < 6) {
-                alert('Password must be at least 6 characters long!');
-                return false;
-            }
-            
-            return true;
-        }
-        
-        // Auto-hide flash messages
-        setTimeout(function() {
-            const flashMessages = document.querySelectorAll('.flash-message');
-            flashMessages.forEach(function(message) {
-                message.style.opacity = '0';
-                setTimeout(function() {
-                    message.remove();
-                }, 300);
-            });
-        }, 5000);
-    </script>
-</body>
-</html>
+</div>
+{% endblock %}

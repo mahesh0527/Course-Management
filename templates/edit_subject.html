@@ -1,79 +1,82 @@
 {% extends "base.html" %}
 
 {% block title %}Edit Subject - StudyTracker{% endblock %}
+{% block page_title %}Edit Subject{% endblock %}
 
 {% block content %}
-<div class="space-y-6">
-    <div class="flex items-center justify-between">
-        <h1 class="text-3xl font-bold text-yellow-400">Edit Subject</h1>
-        <a href="{{ url_for('subjects') }}" class="btn btn-secondary">
-            <i data-lucide="arrow-left"></i>
-            Back to Subjects
-        </a>
-    </div>
+<div class="fade-in">
+    <div class="max-w-2xl mx-auto">
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Edit Subject</h2>
+                <p class="card-subtitle">Update subject information and attendance data</p>
+            </div>
+            <div class="card-content">
+                <form action="{{ url_for('edit_subject', subject_id=subject.id) }}" method="POST">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="form-group">
+                            <label class="form-label" for="name">Subject Name *</label>
+                            <input type="text" id="name" name="name" class="form-input" value="{{ subject.name }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="code">Subject Code</label>
+                            <input type="text" id="code" name="code" class="form-input" value="{{ subject.code or '' }}">
+                        </div>
+                    </div>
 
-    <!-- Edit Subject Form -->
-    <div class="card">
-        <div class="card-header">
-            <h2 class="card-title flex items-center gap-2">
-                <i data-lucide="edit"></i>
-                Edit {{ subject.name }}
-            </h2>
-        </div>
-        <div class="card-content">
-            <form method="POST" action="{{ url_for('update_subject', subject_id=subject.id) }}" id="edit-subject-form">
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="form-group">
-                        <label for="name" class="form-label">Subject Name</label>
-                        <input type="text" id="name" name="name" class="form-input" value="{{ subject.name }}" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="total_classes" class="form-label">Total Classes</label>
-                        <input type="number" id="total_classes" name="total_classes" class="form-input" value="{{ subject.total_classes }}" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="attended_classes" class="form-label">Classes Attended</label>
-                        <input type="number" id="attended_classes" name="attended_classes" class="form-input" value="{{ subject.attended_classes }}" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="required_attendance" class="form-label">Required Attendance (%)</label>
-                        <input type="number" id="required_attendance" name="required_attendance" class="form-input" value="{{ subject.required_attendance }}">
-                    </div>
-                </div>
-                
-                <!-- Current Statistics -->
-                <div class="mt-6 p-4 border border-yellow-400/20 rounded-lg">
-                    <h3 class="text-lg font-semibold text-yellow-400 mb-3">Current Statistics</h3>
                     <div class="grid grid-cols-3 gap-4">
-                        <div class="text-center">
-                            <div class="text-2xl font-bold text-white">
-                                {% if subject.total_classes > 0 %}
-                                    {{ ((subject.attended_classes / subject.total_classes) * 100) | round | int }}%
-                                {% else %}
-                                    0%
-                                {% endif %}
-                            </div>
-                            <div class="text-sm text-gray-400">Current Attendance</div>
+                        <div class="form-group">
+                            <label class="form-label" for="credits">Credits</label>
+                            <input type="number" id="credits" name="credits" class="form-input" value="{{ subject.credits }}" min="1" max="10">
                         </div>
-                        <div class="text-center">
-                            <div class="text-2xl font-bold text-white">{{ subject.attended_classes }}</div>
-                            <div class="text-sm text-gray-400">Classes Attended</div>
+                        <div class="form-group">
+                            <label class="form-label" for="total_classes">Total Classes</label>
+                            <input type="number" id="total_classes" name="total_classes" class="form-input" value="{{ subject.total_classes }}" min="0">
                         </div>
-                        <div class="text-center">
-                            <div class="text-2xl font-bold text-white">{{ subject.total_classes }}</div>
-                            <div class="text-sm text-gray-400">Total Classes</div>
+                        <div class="form-group">
+                            <label class="form-label" for="attended_classes">Attended Classes</label>
+                            <input type="number" id="attended_classes" name="attended_classes" class="form-input" value="{{ subject.attended_classes }}" min="0">
                         </div>
                     </div>
-                    <div class="progress-bar mt-4">
-                        <div class="progress-fill" style="width: {% if subject.total_classes > 0 %}{{ ((subject.attended_classes / subject.total_classes) * 100) | round | int }}%{% else %}0%{% endif %}"></div>
-                    </div>
-                </div>
 
-                <div class="flex gap-3 mt-6">
-                    <button type="submit" class="btn btn-primary">Update Subject</button>
-                    <a href="{{ url_for('subjects') }}" class="btn btn-secondary">Cancel</a>
-                </div>
-            </form>
+                    <div class="form-group">
+                        <label class="form-label" for="required_attendance">Required Attendance (%)</label>
+                        <input type="number" id="required_attendance" name="required_attendance" class="form-input" value="{{ subject.required_attendance }}" min="0" max="100">
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="form-group">
+                            <label class="form-label" for="instructor_name">Instructor Name</label>
+                            <input type="text" id="instructor_name" name="instructor_name" class="form-input" value="{{ subject.instructor_name or '' }}">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="instructor_email">Instructor Email</label>
+                            <input type="email" id="instructor_email" name="instructor_email" class="form-input" value="{{ subject.instructor_email or '' }}">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="room_number">Room Number</label>
+                        <input type="text" id="room_number" name="room_number" class="form-input" value="{{ subject.room_number or '' }}">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="description">Description</label>
+                        <textarea id="description" name="description" class="form-textarea" rows="3">{{ subject.description or '' }}</textarea>
+                    </div>
+
+                    <div class="flex gap-4">
+                        <button type="submit" class="btn btn-primary">
+                            <i data-lucide="save"></i>
+                            Update Subject
+                        </button>
+                        <a href="{{ url_for('subjects') }}" class="btn btn-secondary">
+                            <i data-lucide="arrow-left"></i>
+                            Back to Subjects
+                        </a>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 </div>

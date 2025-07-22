@@ -1,19 +1,24 @@
 {% extends "base.html" %}
 
 {% block title %}Timetable - StudyTracker{% endblock %}
+{% block page_title %}Timetable{% endblock %}
 
 {% block content %}
-<div class="space-y-6">
-    <div class="flex items-center justify-between">
-        <h1 class="text-3xl font-bold text-yellow-400">Weekly Timetable</h1>
-        <button onclick="openAddModal()" class="btn btn-primary">
+<div class="fade-in">
+    <!-- Header Actions -->
+    <div class="flex justify-between items-center mb-8">
+        <div>
+            <h2 class="text-2xl font-bold text-primary mb-2">Weekly Timetable</h2>
+            <p class="text-muted">Manage your class schedule and timing</p>
+        </div>
+        <button onclick="openAddClassModal()" class="btn btn-primary">
             <i data-lucide="plus"></i>
             Add Class
         </button>
     </div>
 
     <!-- Today's Classes -->
-    <div class="card">
+    <div class="card mb-8">
         <div class="card-header">
             <h2 class="card-title flex items-center gap-2">
                 <i data-lucide="calendar-days"></i>
@@ -21,27 +26,35 @@
             </h2>
         </div>
         <div class="card-content">
-            {% if timetable_data[current_day] %}
+            {% set today_classes = [] %}
+            {% for time_slot in time_slots %}
+                {% if timetable_data[current_day][time_slot] %}
+                    {% set _ = today_classes.append(timetable_data[current_day][time_slot]) %}
+                {% endif %}
+            {% endfor %}
+            
+            {% if today_classes %}
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {% for time_slot, entry in timetable_data[current_day].items() %}
-                        {% if entry %}
-                        <div class="flex items-center justify-between p-3 border border-yellow-400/20 rounded-lg">
-                            <div>
-                                <div class="font-semibold text-yellow-400">{{ time_slot }}</div>
-                                <div class="text-white">{{ entry.subject.name }}</div>
-                            </div>
-                            <div class="flex gap-2">
-                                <button onclick="editEntry({{ entry.id }}, '{{ entry.day_of_week }}', '{{ entry.time_slot }}', {{ entry.subject_id }})" class="btn btn-primary btn-sm">
-                                    <i data-lucide="edit"></i>
-                                </button>
-                                <a href="{{ url_for('delete_timetable_entry', entry_id=entry.id) }}" 
-                                   class="btn btn-danger btn-sm"
-                                   onclick="return confirmDelete('Are you sure you want to delete this class?')">
-                                    <i data-lucide="trash-2"></i>
-                                </a>
-                            </div>
+                    {% for entry in today_classes %}
+                    <div class="flex items-center justify-between p-3 border border-yellow-400/20 rounded-lg">
+                        <div>
+                            <div class="font-semibold text-yellow-400">{{ entry.time_slot }}</div>
+                            <div class="text-white">{{ entry.subject_name }}</div>
+                            {% if entry.room_number %}
+                            <div class="text-sm text-gray-400">Room: {{ entry.room_number }}</div>
+                            {% endif %}
                         </div>
-                        {% endif %}
+                        <div class="flex gap-2">
+                            <button onclick="editEntry({{ entry.id }}, '{{ entry.day_of_week }}', '{{ entry.time_slot }}', '{{ entry.subject_name }}', '{{ entry.room_number or '' }}', '{{ entry.instructor_name or '' }}')" class="btn btn-primary btn-sm">
+                                <i data-lucide="edit"></i>
+                            </button>
+                            <a href="{{ url_for('delete_timetable_entry', entry_id=entry.id) }}" 
+                               class="btn btn-danger btn-sm"
+                               onclick="return confirmDelete('Are you sure you want to delete this class?')">
+                                <i data-lucide="trash-2"></i>
+                            </a>
+                        </div>
+                    </div>
                     {% endfor %}
                 </div>
             {% else %}
@@ -74,21 +87,29 @@
                             <td class="text-center {% if day == current_day %}bg-yellow-400/5{% endif %}">
                                 {% if timetable_data[day][time_slot] %}
                                     <div class="timetable-cell">
-                                        <div class="subject-name">{{ timetable_data[day][time_slot].subject.name }}</div>
-                                        <div class="cell-actions">
-                                            <button onclick="editEntry({{ timetable_data[day][time_slot].id }}, '{{ day }}', '{{ time_slot }}', {{ timetable_data[day][time_slot].subject_id }})" class="btn-icon">
-                                                <i data-lucide="edit"></i>
+                                        <div class="subject-name">{{ timetable_data[day][time_slot].subject_name }}</div>
+                                        {% if timetable_data[day][time_slot].room_number %}
+                                        <div class="class-details">Room: {{ timetable_data[day][time_slot].room_number }}</div>
+                                        {% endif %}
+                                        {% if timetable_data[day][time_slot].instructor_name %}
+                                        <div class="class-details">{{ timetable_data[day][time_slot].instructor_name }}</div>
+                                        {% endif %}
+                                        <div class="class-actions" style="position: absolute; top: 4px; right: 4px; opacity: 0; transition: opacity 0.2s;">
+                                            <button onclick="editEntry({{ timetable_data[day][time_slot].id }}, '{{ day }}', '{{ time_slot }}', '{{ timetable_data[day][time_slot].subject_name }}', '{{ timetable_data[day][time_slot].room_number or '' }}', '{{ timetable_data[day][time_slot].instructor_name or '' }}')" 
+                                                    class="btn-icon" style="width: 24px; height: 24px;">
+                                                <i data-lucide="edit" style="width: 12px; height: 12px;"></i>
                                             </button>
                                             <a href="{{ url_for('delete_timetable_entry', entry_id=timetable_data[day][time_slot].id) }}" 
-                                               class="btn-icon btn-danger"
+                                               class="btn-icon btn-danger" style="width: 24px; height: 24px;"
                                                onclick="return confirmDelete('Are you sure?')">
-                                                <i data-lucide="x"></i>
+                                                <i data-lucide="trash-2" style="width: 12px; height: 12px;"></i>
                                             </a>
                                         </div>
                                     </div>
                                 {% else %}
-                                    <button onclick="openAddModal('{{ day }}', '{{ time_slot }}')" class="add-class-btn">
-                                        <i data-lucide="plus"></i>
+                                    <button onclick="openAddClassModal('{{ day }}', '{{ time_slot }}')" class="add-class-btn">
+                                        <i data-lucide="plus" class="w-4 h-4 mx-auto mb-1"></i>
+                                        <div>Add Class</div>
                                     </button>
                                 {% endif %}
                             </td>
@@ -102,7 +123,7 @@
     </div>
 </div>
 
-<!-- Add/Edit Modal -->
+<!-- Add/Edit Class Modal -->
 <div id="timetableModal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
@@ -112,41 +133,48 @@
             </button>
         </div>
         <form method="POST" action="{{ url_for('add_timetable_entry') }}" id="timetableForm">
+            <input type="hidden" id="entry_id" name="entry_id" value="">
             <div class="modal-body">
-                <div class="form-group">
-                    <label for="day" class="form-label">Day</label>
-                    <select id="day" name="day" class="form-select" required>
-                        <option value="">Select Day</option>
-                        {% for day in days %}
-                        <option value="{{ day }}">{{ day }}</option>
-                        {% endfor %}
-                    </select>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="form-group">
+                        <label for="day_of_week" class="form-label">Day *</label>
+                        <select id="day_of_week" name="day_of_week" class="form-select" required>
+                            <option value="">Select Day</option>
+                            {% for day in days %}
+                            <option value="{{ day }}">{{ day }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="time_slot" class="form-label">Time Slot *</label>
+                        <select id="time_slot" name="time_slot" class="form-select" required>
+                            <option value="">Select Time</option>
+                            {% for slot in time_slots %}
+                            <option value="{{ slot }}">{{ slot }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
                 </div>
-                
+
                 <div class="form-group">
-                    <label for="time_slot" class="form-label">Time Slot</label>
-                    <select id="time_slot" name="time_slot" class="form-select" required>
-                        <option value="">Select Time</option>
-                        {% for slot in time_slots %}
-                        <option value="{{ slot }}">{{ slot }}</option>
-                        {% endfor %}
-                    </select>
+                    <label for="subject_name" class="form-label">Subject Name *</label>
+                    <input type="text" id="subject_name" name="subject_name" class="form-input" required placeholder="Enter subject name">
                 </div>
-                
-                <div class="form-group">
-                    <label for="subject_id" class="form-label">Subject</label>
-                    <select id="subject_id" name="subject_id" class="form-select" required>
-                        <option value="">Select Subject</option>
-                        {% for subject in subjects %}
-                        <option value="{{ subject.id }}">{{ subject.name }}</option>
-                        {% endfor %}
-                    </select>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="form-group">
+                        <label for="room_number" class="form-label">Room Number</label>
+                        <input type="text" id="room_number" name="room_number" class="form-input" placeholder="e.g., Room 101">
+                    </div>
+                    <div class="form-group">
+                        <label for="instructor_name" class="form-label">Instructor Name</label>
+                        <input type="text" id="instructor_name" name="instructor_name" class="form-input" placeholder="Professor Name">
+                    </div>
                 </div>
             </div>
-            
             <div class="modal-footer">
                 <button type="button" onclick="closeModal()" class="btn btn-secondary">Cancel</button>
-                <button type="submit" class="btn btn-primary">Save Class</button>
+                <button type="submit" class="btn btn-primary" id="submitBtn">Add Class</button>
             </div>
         </form>
     </div>
@@ -159,6 +187,7 @@
     background: rgba(255, 215, 0, 0.1);
     border-radius: 0.25rem;
     border: 1px solid rgba(255, 215, 0, 0.3);
+    min-height: 60px;
 }
 
 .subject-name {
@@ -168,7 +197,13 @@
     margin-bottom: 0.25rem;
 }
 
-.cell-actions {
+.class-details {
+    font-size: 0.75rem;
+    color: #9ca3af;
+    margin-bottom: 0.125rem;
+}
+
+.class-actions {
     display: flex;
     gap: 0.25rem;
     justify-content: center;
@@ -176,7 +211,7 @@
     transition: opacity 0.2s ease;
 }
 
-.timetable-cell:hover .cell-actions {
+.timetable-cell:hover .class-actions {
     opacity: 1;
 }
 
@@ -210,7 +245,10 @@
     padding: 1rem;
     border-radius: 0.25rem;
     width: 100%;
+    min-height: 60px;
     transition: all 0.2s ease;
+    font-size: 0.75rem;
+    text-align: center;
 }
 
 .add-class-btn:hover {
@@ -296,35 +334,80 @@
 </style>
 
 <script>
-function openAddModal(day = '', timeSlot = '') {
+let isEditMode = false;
+let currentEntryId = null;
+
+function openAddClassModal(day = '', timeSlot = '') {
+    isEditMode = false;
+    currentEntryId = null;
+    
     document.getElementById('modalTitle').textContent = 'Add Class';
+    document.getElementById('submitBtn').textContent = 'Add Class';
     document.getElementById('timetableForm').action = "{{ url_for('add_timetable_entry') }}";
+    document.getElementById('entry_id').value = '';
     
     // Reset form
     document.getElementById('timetableForm').reset();
     
     // Pre-fill if provided
-    if (day) document.getElementById('day').value = day;
+    if (day) document.getElementById('day_of_week').value = day;
     if (timeSlot) document.getElementById('time_slot').value = timeSlot;
     
     document.getElementById('timetableModal').style.display = 'block';
+    document.body.style.overflow = 'hidden';
 }
 
-function editEntry(entryId, day, timeSlot, subjectId) {
+function editEntry(entryId, day, timeSlot, subjectName, roomNumber, instructorName) {
+    isEditMode = true;
+    currentEntryId = entryId;
+    
     document.getElementById('modalTitle').textContent = 'Edit Class';
-    document.getElementById('timetableForm').action = "{{ url_for('add_timetable_entry') }}";
+    document.getElementById('submitBtn').textContent = 'Update Class';
+    document.getElementById('timetableForm').action = "{{ url_for('edit_timetable_entry', entry_id=0) }}".replace('0', entryId);
+    document.getElementById('entry_id').value = entryId;
     
     // Fill form with existing data
-    document.getElementById('day').value = day;
+    document.getElementById('day_of_week').value = day;
     document.getElementById('time_slot').value = timeSlot;
-    document.getElementById('subject_id').value = subjectId;
+    document.getElementById('subject_name').value = subjectName;
+    document.getElementById('room_number').value = roomNumber;
+    document.getElementById('instructor_name').value = instructorName;
     
     document.getElementById('timetableModal').style.display = 'block';
+    document.body.style.overflow = 'hidden';
 }
 
 function closeModal() {
     document.getElementById('timetableModal').style.display = 'none';
+    document.body.style.overflow = 'auto';
+    isEditMode = false;
+    currentEntryId = null;
 }
+
+function confirmDelete(message) {
+    return confirm(message);
+}
+
+// Show class actions on hover
+document.addEventListener('DOMContentLoaded', function() {
+    const classCells = document.querySelectorAll('.timetable-cell');
+    classCells.forEach(cell => {
+        const actions = cell.querySelector('.class-actions');
+        if (actions) {
+            cell.addEventListener('mouseenter', () => {
+                actions.style.opacity = '1';
+            });
+            cell.addEventListener('mouseleave', () => {
+                actions.style.opacity = '0';
+            });
+        }
+    });
+    
+    // Initialize Lucide icons
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+});
 
 // Close modal when clicking outside
 window.onclick = function(event) {

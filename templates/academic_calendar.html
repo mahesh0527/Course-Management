@@ -1,340 +1,283 @@
 {% extends "base.html" %}
 
 {% block title %}Academic Calendar - StudyTracker{% endblock %}
+{% block page_title %}Academic Calendar{% endblock %}
 
 {% block content %}
-<div class="space-y-6">
-    <div class="flex items-center justify-between">
-        <h1 class="text-3xl font-bold text-yellow-400 flex items-center gap-2">
-            <i data-lucide="graduation-cap" class="w-8 h-8"></i>
-            Academic Calendar
-        </h1>
-        <button onclick="saveCalendar()" class="btn btn-primary">
-            <i data-lucide="save" class="w-4 h-4 mr-2"></i>
-            Save Calendar
+<div class="fade-in">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-8">
+        <div>
+            <h2 class="text-2xl font-bold text-primary mb-2">Academic Calendar</h2>
+            <p class="text-muted">Configure your semester dates and holidays</p>
+        </div>
+        <button onclick="openCalendarModal()" class="btn btn-primary">
+            <i data-lucide="plus"></i>
+            Add Calendar
         </button>
     </div>
 
-    <!-- Calendar Setup -->
-    <div class="card">
-        <div class="card-header">
-            <h2 class="card-title flex items-center gap-2">
-                <i data-lucide="info" class="w-5 h-5"></i>
-                Semester Information
-            </h2>
-        </div>
-        <div class="card-content">
-            <form id="calendarForm">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="form-group">
-                        <label class="form-label">Semester Name</label>
-                        <input type="text" name="semester_name" 
-                               value="{{ calendar.semester_name if calendar else '' }}"
-                               class="form-input"
-                               placeholder="e.g., Fall 2024">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Start Date</label>
-                        <input type="date" name="start_date" 
-                               value="{{ calendar.start_date if calendar else '' }}"
-                               class="form-input">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">End Date</label>
-                        <input type="date" name="end_date" 
-                               value="{{ calendar.end_date if calendar else '' }}"
-                               class="form-input">
-                    </div>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Weekend Days Configuration -->
-    <div class="card">
-        <div class="card-header">
-            <h2 class="card-title flex items-center gap-2">
-                <i data-lucide="clock" class="w-5 h-5"></i>
-                Weekend Days Configuration
-            </h2>
-        </div>
-        <div class="card-content">
-            <p class="text-gray-300 text-sm mb-4">
-                Select which days of the week are considered weekends/holidays (non-working days):
-            </p>
-            
-            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 mb-4">
-                {% set day_names = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] %}
-                {% set current_weekend_days = calendar.weekend_days|from_json if calendar and calendar.weekend_days else [0, 6] %}
-                
-                {% for day_name in day_names %}
-                <div class="flex items-center space-x-2">
-                    <input type="checkbox" 
-                           id="weekend_{{ loop.index0 }}" 
-                           name="weekend_{{ loop.index0 }}"
-                           class="w-4 h-4 text-yellow-400 bg-black border-yellow-400/50 rounded focus:ring-yellow-400"
-                           {% if loop.index0 in current_weekend_days %}checked{% endif %}
-                           onchange="updateWeekendSummary()">
-                    <label for="weekend_{{ loop.index0 }}" class="text-sm text-gray-300 cursor-pointer">
-                        {{ day_name }}
-                    </label>
-                </div>
-                {% endfor %}
-            </div>
-            
-            <!-- Weekend Summary -->
-            <div class="bg-yellow-400/10 border border-yellow-400/30 rounded-lg p-3">
-                <div class="flex items-center gap-2 text-yellow-400 text-sm mb-2">
-                    <i data-lucide="info" class="w-4 h-4"></i>
-                    <span class="font-medium">Current Configuration:</span>
-                </div>
-                <div class="text-sm text-gray-300" id="weekendSummary">
-                    <p><strong>Weekend Days:</strong> <span id="weekendDaysList">Loading...</span></p>
-                    <p><strong>Working Days per Week:</strong> <span id="workingDaysPerWeek">Loading...</span> days</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Visual Calendar Display -->
-    <div class="card">
-        <div class="card-header">
-            <h2 class="card-title flex items-center gap-2">
-                <i data-lucide="calendar" class="w-5 h-5"></i>
-                Calendar View
-            </h2>
-        </div>
-        <div class="card-content">
-            <div id="calendar-container" class="calendar-container">
-                <!-- Calendar will be rendered here by JavaScript -->
-            </div>
-            
-            <!-- Calendar Legend -->
-            <div class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
-                <div class="flex items-center gap-2">
-                    <div class="w-4 h-4 bg-yellow-400/20 border border-yellow-400/30 rounded"></div>
-                    <span class="text-sm text-gray-300">Today</span>
-                </div>
-                <div class="flex items-center gap-2">
-                    <div class="w-4 h-4 bg-yellow-400/5 border border-yellow-400/10 rounded"></div>
-                    <span class="text-sm text-gray-300">Weekend</span>
-                </div>
-                <div class="flex items-center gap-2">
-                    <div class="w-4 h-4 bg-red-500/20 border border-red-500/30 rounded"></div>
-                    <span class="text-sm text-gray-300">Holiday</span>
-                </div>
-                <div class="flex items-center gap-2">
-                    <div class="w-4 h-4 bg-green-500/10 border border-green-500/30 rounded"></div>
-                    <span class="text-sm text-gray-300">Working Day</span>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Individual Holidays -->
-    <div class="card">
-        <div class="card-header">
-            <h2 class="card-title flex items-center gap-2">
-                <i data-lucide="calendar-days" class="w-5 h-5"></i>
-                Individual Holidays
-            </h2>
-        </div>
-        <div class="card-content">
-            <form action="{{ url_for('add_holiday') }}" method="POST" class="mb-4">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="form-group">
-                        <label class="form-label">Holiday Name</label>
-                        <input type="text" name="holiday_name" required
-                               class="form-input"
-                               placeholder="e.g., Independence Day">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Holiday Date</label>
-                        <div class="flex gap-2">
-                            <input type="date" name="holiday_date" required
-                                   class="form-input flex-1">
-                            <button type="submit" class="btn btn-primary">
-                                <i data-lucide="plus" class="w-4 h-4 mr-2"></i>
-                                Add Holiday
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </form>
-
-            {% if holidays %}
-            <div class="space-y-2">
-                <h4 class="text-sm font-medium text-gray-300">Added Holidays:</h4>
-                {% for holiday in holidays %}
-                <div class="flex items-center justify-between p-3 border border-yellow-400/20 rounded-lg">
+    <!-- Current Calendar -->
+    {% if calendars %}
+        {% for calendar in calendars %}
+        <div class="card mb-6">
+            <div class="card-header">
+                <div class="flex justify-between items-start">
                     <div>
-                        <span class="text-white font-medium">{{ holiday.name }}</span>
-                        <span class="text-gray-400 ml-2">{{ holiday.date.strftime('%Y-%m-%d') }}</span>
+                        <h3 class="card-title">{{ calendar.semester_name }}</h3>
+                        {% if calendar.academic_year %}
+                        <p class="card-subtitle">Academic Year: {{ calendar.academic_year }}</p>
+                        {% endif %}
                     </div>
-                    <a href="{{ url_for('delete_holiday', holiday_id=holiday.id) }}" 
-                       class="btn btn-danger btn-sm"
-                       onclick="return confirmDelete('Are you sure you want to delete this holiday?')">
-                        <i data-lucide="trash-2" class="w-4 h-4"></i>
-                    </a>
+                    <div class="flex gap-2">
+                        <button onclick="editCalendar({{ calendar.id }})" class="btn btn-secondary btn-sm">
+                            <i data-lucide="edit"></i>
+                            Edit
+                        </button>
+                    </div>
                 </div>
-                {% endfor %}
             </div>
-            {% endif %}
-        </div>
-    </div>
+            <div class="card-content">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div>
+                        <h4 class="font-semibold text-primary mb-3">Semester Duration</h4>
+                        <div class="space-y-2 text-sm">
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="calendar" class="w-4 h-4 text-muted"></i>
+                                <span class="text-muted">Start:</span>
+                                <span class="text-primary">{{ calendar.start_date.strftime('%B %d, %Y') }}</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="calendar" class="w-4 h-4 text-muted"></i>
+                                <span class="text-muted">End:</span>
+                                <span class="text-primary">{{ calendar.end_date.strftime('%B %d, %Y') }}</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="clock" class="w-4 h-4 text-muted"></i>
+                                <span class="text-muted">Duration:</span>
+                                <span class="text-primary">{{ (calendar.end_date - calendar.start_date).days }} days</span>
+                            </div>
+                        </div>
+                    </div>
 
-    <!-- Holiday Periods -->
-    <div class="card">
-        <div class="card-header">
-            <h2 class="card-title flex items-center gap-2">
-                <i data-lucide="calendar-range" class="w-5 h-5"></i>
-                Holiday Periods & Long Breaks
-            </h2>
-        </div>
-        <div class="card-content">
-            <form action="{{ url_for('add_holiday_period') }}" method="POST" class="mb-4">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="form-group">
-                        <label class="form-label">Break Name</label>
-                        <input type="text" name="period_name" required
-                               class="form-input"
-                               placeholder="e.g., Winter Break, Spring Break">
+                    <div>
+                        <h4 class="font-semibold text-primary mb-3">Weekend Configuration</h4>
+                        <div class="space-y-2 text-sm">
+                            {% set weekend_days = calendar.weekend_days|from_json if calendar.weekend_days else [0, 6] %}
+                            {% set day_names = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] %}
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="calendar-x" class="w-4 h-4 text-muted"></i>
+                                <span class="text-muted">Weekend Days:</span>
+                            </div>
+                            <div class="ml-6">
+                                {% for day_index in weekend_days %}
+                                <span class="inline-block px-2 py-1 bg-red-500/20 text-red-400 rounded text-xs mr-1 mb-1">
+                                    {{ day_names[day_index] }}
+                                </span>
+                                {% endfor %}
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="briefcase" class="w-4 h-4 text-muted"></i>
+                                <span class="text-muted">Working Days:</span>
+                                <span class="text-primary">{{ 7 - weekend_days|length }} per week</span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">Start Date</label>
-                        <input type="date" name="start_date" required
-                               class="form-input">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">End Date</label>
-                        <div class="flex gap-2">
-                            <input type="date" name="end_date" required
-                                   class="form-input flex-1">
-                            <button type="submit" class="btn btn-primary">
-                                <i data-lucide="plus" class="w-4 h-4 mr-2"></i>
-                                Add Period
-                            </button>
+
+                    <div>
+                        <h4 class="font-semibold text-primary mb-3">Statistics</h4>
+                        <div class="space-y-2 text-sm">
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="calendar-check" class="w-4 h-4 text-muted"></i>
+                                <span class="text-muted">Total Weeks:</span>
+                                <span class="text-primary">{{ ((calendar.end_date - calendar.start_date).days / 7)|round|int }}</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="users" class="w-4 h-4 text-muted"></i>
+                                <span class="text-muted">Holidays:</span>
+                                <span class="text-primary">{{ calendar.holidays|length }}</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="pause" class="w-4 h-4 text-muted"></i>
+                                <span class="text-muted">Holiday Periods:</span>
+                                <span class="text-primary">{{ calendar.holiday_periods|length }}</span>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </form>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <!-- Empty State -->
+        <div class="card">
+            <div class="card-content">
+                <div class="text-center py-12">
+                    <i data-lucide="calendar-plus" class="w-16 h-16 text-muted mx-auto mb-4"></i>
+                    <h3 class="text-xl font-semibold text-primary mb-2">No Academic Calendar</h3>
+                    <p class="text-muted mb-6">Set up your academic calendar to track semester dates and holidays</p>
+                    <button onclick="openCalendarModal()" class="btn btn-primary">
+                        <i data-lucide="plus"></i>
+                        Create Academic Calendar
+                    </button>
+                </div>
+            </div>
+        </div>
+    {% endif %}
 
-            {% if holiday_periods %}
-            <div class="space-y-2">
-                <h4 class="text-sm font-medium text-gray-300">Added Holiday Periods:</h4>
+    <!-- Holidays Section -->
+    {% if holidays %}
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Holidays</h3>
+            <button onclick="openHolidayModal()" class="text-accent hover:text-accent-hover text-sm">
+                <i data-lucide="plus" class="w-4 h-4 inline mr-1"></i>
+                Add Holiday
+            </button>
+        </div>
+        <div class="card-content">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {% for holiday in holidays %}
+                <div class="p-3 bg-tertiary rounded-lg border border-secondary">
+                    <div class="flex justify-between items-start mb-2">
+                        <h4 class="font-semibold text-primary">{{ holiday.name }}</h4>
+                        <span class="text-xs px-2 py-1 bg-accent/20 text-accent rounded">{{ holiday.category }}</span>
+                    </div>
+                    <div class="text-sm text-muted mb-2">{{ holiday.date.strftime('%B %d, %Y') }}</div>
+                    {% if holiday.description %}
+                    <div class="text-xs text-muted">{{ holiday.description }}</div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Holiday Periods Section -->
+    {% if holiday_periods %}
+    <div class="card mt-6">
+        <div class="card-header">
+            <h3 class="card-title">Holiday Periods</h3>
+            <button onclick="openHolidayPeriodModal()" class="text-accent hover:text-accent-hover text-sm">
+                <i data-lucide="plus" class="w-4 h-4 inline mr-1"></i>
+                Add Period
+            </button>
+        </div>
+        <div class="card-content">
+            <div class="space-y-3">
                 {% for period in holiday_periods %}
-                <div class="flex items-center justify-between p-3 border border-yellow-400/20 rounded-lg bg-yellow-400/5">
-                    <div class="flex flex-col">
-                        <span class="text-white font-medium">{{ period.name }}</span>
-                        <span class="text-gray-400 text-sm">
-                            {{ period.start_date.strftime('%Y-%m-%d') }} to {{ period.end_date.strftime('%Y-%m-%d') }}
-                            <span class="ml-2 text-yellow-400">
-                                ({{ (period.end_date - period.start_date).days + 1 }} days)
-                            </span>
-                        </span>
-                    </div>
-                    <a href="{{ url_for('delete_holiday_period', period_id=period.id) }}" 
-                       class="btn btn-danger btn-sm"
-                       onclick="return confirmDelete('Are you sure you want to delete this holiday period?')">
-                        <i data-lucide="trash-2" class="w-4 h-4"></i>
-                    </a>
-                </div>
-                {% endfor %}
-            </div>
-            {% endif %}
-        </div>
-    </div>
-
-    <!-- Statistics -->
-    {% if calculations %}
-    <div class="card">
-        <div class="card-header">
-            <h2 class="card-title flex items-center gap-2">
-                <i data-lucide="bar-chart" class="w-5 h-5"></i>
-                Semester Statistics
-            </h2>
-        </div>
-        <div class="card-content">
-            <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
-                <div class="text-center p-4 border border-yellow-400/20 rounded-lg">
-                    <div class="text-2xl font-bold text-yellow-400">{{ calculations.working_days }}</div>
-                    <div class="text-sm text-gray-400">Working Days</div>
-                </div>
-                <div class="text-center p-4 border border-yellow-400/20 rounded-lg">
-                    <div class="text-2xl font-bold text-yellow-400">{{ calculations.total_weeks }}</div>
-                    <div class="text-sm text-gray-400">Total Weeks</div>
-                </div>
-                <div class="text-center p-4 border border-yellow-400/20 rounded-lg">
-                    <div class="text-2xl font-bold text-yellow-400">{{ calculations.working_days_per_week }}</div>
-                    <div class="text-sm text-gray-400">Working Days/Week</div>
-                </div>
-                <div class="text-center p-4 border border-yellow-400/20 rounded-lg">
-                    <div class="text-2xl font-bold text-yellow-400">{{ calculations.total_holiday_days }}</div>
-                    <div class="text-sm text-gray-400">Total Holiday Days</div>
-                </div>
-                <div class="text-center p-4 border border-yellow-400/20 rounded-lg">
-                    <div class="text-2xl font-bold text-yellow-400">{{ calculations.subject_classes|length }}</div>
-                    <div class="text-sm text-gray-400">Subjects</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Subject Class Calculations -->
-    {% if calculations.subject_classes %}
-    <div class="card">
-        <div class="card-header">
-            <h2 class="card-title flex items-center gap-2">
-                <i data-lucide="calculator" class="w-5 h-5"></i>
-                Calculated Classes per Subject
-            </h2>
-        </div>
-        <div class="card-content">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {% for subject, count in calculations.subject_classes.items() %}
-                <div class="flex items-center justify-between p-3 border border-yellow-400/20 rounded-lg">
-                    <span class="text-white font-medium">{{ subject }}</span>
-                    <div class="text-right">
-                        <div class="text-lg font-bold text-yellow-400">{{ count }} classes</div>
-                        <div class="text-xs text-gray-400">
-                            {% if calculations.total_weeks > 0 %}
-                                {{ "%.1f"|format(count / calculations.total_weeks) }} per week
-                            {% else %}
-                                0 per week
-                            {% endif %}
+                <div class="flex items-center justify-between p-3 bg-tertiary rounded-lg border border-secondary">
+                    <div>
+                        <h4 class="font-semibold text-primary">{{ period.name }}</h4>
+                        <div class="text-sm text-muted">
+                            {{ period.start_date.strftime('%B %d') }} - {{ period.end_date.strftime('%B %d, %Y') }}
+                            ({{ (period.end_date - period.start_date).days + 1 }} days)
                         </div>
+                        {% if period.description %}
+                        <div class="text-xs text-muted mt-1">{{ period.description }}</div>
+                        {% endif %}
                     </div>
+                    <span class="text-xs px-2 py-1 bg-accent/20 text-accent rounded">{{ period.category }}</span>
                 </div>
                 {% endfor %}
             </div>
         </div>
     </div>
     {% endif %}
-    {% endif %}
+</div>
 
-    <!-- Information Card -->
-    <div class="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
-        <div class="flex items-start gap-3">
-            <i data-lucide="info" class="w-5 h-5 text-blue-400 mt-0.5"></i>
-            <div class="text-sm text-blue-300">
-                <p class="font-medium mb-2">Flexible Weekend & Holiday Management:</p>
-                <ul class="space-y-1 text-xs">
-                    <li>• <strong>Configurable Weekend Days:</strong> Choose any combination of days as weekends</li>
-                    <li>• <strong>Flexible Working Week:</strong> Support for 5-day, 6-day, or custom working weeks</li>
-                    <li>• <strong>Individual Holidays:</strong> Add single-day holidays like Independence Day, Diwali, etc.</li>
-                    <li>• <strong>Holiday Periods:</strong> Add long breaks like Winter Break, Spring Break</li>
-                    <li>• <strong>Smart Calculation:</strong> Working days exclude weekends, holidays, and holiday periods</li>
-                    <li>• <strong>Global Compatibility:</strong> Works with different academic systems worldwide</li>
-                </ul>
-            </div>
+<!-- Academic Calendar Modal -->
+<div id="calendarModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Academic Calendar Setup</h3>
+            <button onclick="closeCalendarModal()" class="modal-close">
+                <i data-lucide="x"></i>
+            </button>
         </div>
+        <form action="{{ url_for('save_academic_calendar') }}" method="POST">
+            <div class="modal-body">
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="form-group">
+                        <label class="form-label" for="semester_name">Semester Name *</label>
+                        <input type="text" id="semester_name" name="semester_name" class="form-input" required placeholder="e.g., Fall 2024">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="academic_year">Academic Year</label>
+                        <input type="text" id="academic_year" name="academic_year" class="form-input" placeholder="e.g., 2024-2025">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="form-group">
+                        <label class="form-label" for="start_date">Start Date *</label>
+                        <input type="date" id="start_date" name="start_date" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="end_date">End Date *</label>
+                        <input type="date" id="end_date" name="end_date" class="form-input" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Weekend Days</label>
+                    <div class="grid grid-cols-4 gap-2 mt-2">
+                        {% set day_names = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] %}
+                        {% for i in range(7) %}
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" name="weekend_{{ i }}" value="{{ i }}" class="form-checkbox" {% if i in [0, 6] %}checked{% endif %}>
+                            <span class="text-sm">{{ day_names[i] }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" onclick="closeCalendarModal()" class="btn btn-secondary">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save Calendar</button>
+            </div>
+        </form>
     </div>
 </div>
 
 <script>
-// Initialize weekend summary on page load
-document.addEventListener('DOMContentLoaded', function() {
-    updateWeekendSummary();
+function openCalendarModal() {
+    document.getElementById('calendarModal').style.display = 'block';
+    document.body.style.overflow = 'hidden';
+}
+
+function closeCalendarModal() {
+    document.getElementById('calendarModal').style.display = 'none';
+    document.body.style.overflow = 'auto';
+}
+
+function editCalendar(calendarId) {
+    // Implementation for editing calendar
+    alert('Edit calendar functionality to be implemented');
+}
+
+function openHolidayModal() {
+    alert('Add holiday functionality to be implemented');
+}
+
+function openHolidayPeriodModal() {
+    alert('Add holiday period functionality to be implemented');
+}
+
+// Close modal when clicking outside
+window.onclick = function(event) {
+    const modal = document.getElementById('calendarModal');
+    if (event.target === modal) {
+        closeCalendarModal();
+    }
+}
+
+// Close modal with Escape key
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        closeCalendarModal();
+    }
 });
 </script>
 {% endblock %}

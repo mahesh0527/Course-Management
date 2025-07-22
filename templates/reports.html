@@ -1,82 +1,186 @@
 {% extends "base.html" %}
 
 {% block title %}Reports - StudyTracker{% endblock %}
+{% block page_title %}Reports{% endblock %}
 
 {% block content %}
-<div class="space-y-6">
-    <div class="flex items-center justify-between">
-        <h1 class="text-3xl font-bold text-yellow-400">Attendance Reports</h1>
+<div class="fade-in">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-8">
+        <div>
+            <h2 class="text-2xl font-bold text-primary mb-2">Attendance Reports</h2>
+            <p class="text-muted">Analyze your attendance patterns and performance</p>
+        </div>
+        <a href="{{ url_for('generate_report_pdf') }}" class="btn btn-primary">
+            <i data-lucide="download"></i>
+            Download PDF Report
+        </a>
     </div>
 
-    <!-- Overall Stats -->
-    <div class="card">
-        <div class="card-header">
-            <h2 class="card-title flex items-center gap-2">
-                <i data-lucide="trending-up"></i>
-                Overall Attendance
-            </h2>
+    <!-- Overall Statistics -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        {% set total_subjects = report_data|length %}
+        {% set total_classes = report_data|sum(attribute='subject.total_classes') %}
+        {% set total_attended = report_data|sum(attribute='subject.attended_classes') %}
+        {% set overall_percentage = (total_attended / total_classes * 100)|round|int if total_classes > 0 else 0 %}
+        
+        <div class="stat-card">
+            <div class="stat-icon bg-blue-500/20 text-blue-400">
+                <i data-lucide="book-open"></i>
+            </div>
+            <div class="stat-content">
+                <h3 class="stat-number">{{ total_subjects }}</h3>
+                <p class="stat-label">Total Subjects</p>
+            </div>
         </div>
-        <div class="card-content">
-            <div class="text-center">
-                <div class="text-4xl font-bold text-yellow-400 mb-2">{{ overall_attendance }}%</div>
-                <div class="progress-bar h-4 max-w-md mx-auto">
-                    <div class="progress-fill" style="width: {{ overall_attendance }}%"></div>
-                </div>
-                <p class="text-gray-400 mt-2">Average across all subjects</p>
+
+        <div class="stat-card">
+            <div class="stat-icon bg-purple-500/20 text-purple-400">
+                <i data-lucide="calendar"></i>
+            </div>
+            <div class="stat-content">
+                <h3 class="stat-number">{{ total_classes }}</h3>
+                <p class="stat-label">Total Classes</p>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon bg-green-500/20 text-green-400">
+                <i data-lucide="check-circle"></i>
+            </div>
+            <div class="stat-content">
+                <h3 class="stat-number">{{ total_attended }}</h3>
+                <p class="stat-label">Classes Attended</p>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon {% if overall_percentage >= 80 %}bg-green-500/20 text-green-400{% else %}bg-red-500/20 text-red-400{% endif %}">
+                <i data-lucide="trending-up"></i>
+            </div>
+            <div class="stat-content">
+                <h3 class="stat-number">{{ overall_percentage }}%</h3>
+                <p class="stat-label">Overall Attendance</p>
             </div>
         </div>
     </div>
 
     <!-- Subject-wise Reports -->
-    <div class="subject-grid">
-        {% for report in subject_reports %}
+    {% if report_data %}
         <div class="card">
             <div class="card-header">
-                <h3 class="text-lg text-white flex items-center justify-between">
-                    {{ report.subject.name }}
-                    {% if report.status == 'excellent' %}
-                        <i data-lucide="check-circle" class="text-green-400"></i>
-                    {% elif report.status == 'warning' %}
-                        <i data-lucide="alert-triangle" class="text-yellow-400"></i>
-                    {% else %}
-                        <i data-lucide="check-circle" class="text-blue-400"></i>
-                    {% endif %}
-                </h3>
+                <h3 class="card-title">Subject-wise Attendance</h3>
+                <p class="card-subtitle">Detailed breakdown by subject</p>
             </div>
-            <div class="card-content space-y-4">
-                <div class="flex justify-between items-center">
-                    <span class="text-gray-400">Classes Attended</span>
-                    <span class="text-white font-semibold">
-                        {{ report.subject.attended_classes }}/{{ report.subject.total_classes }}
-                    </span>
-                </div>
+            <div class="card-content">
+                <div class="space-y-4">
+                    {% for data in report_data %}
+                    <div class="p-4 bg-tertiary rounded-lg border border-secondary">
+                        <div class="flex justify-between items-start mb-3">
+                            <div>
+                                <h4 class="font-semibold text-primary">{{ data.subject.name }}</h4>
+                                {% if data.subject.code %}
+                                <p class="text-sm text-muted">{{ data.subject.code }}</p>
+                                {% endif %}
+                            </div>
+                            <div class="text-right">
+                                <div class="text-2xl font-bold {% if data.attendance_percentage >= data.subject.required_attendance %}text-green-400{% else %}text-red-400{% endif %}">
+                                    {{ data.attendance_percentage }}%
+                                </div>
+                                <div class="text-xs text-muted">{{ data.subject.attended_classes }}/{{ data.subject.total_classes }} classes</div>
+                            </div>
+                        </div>
 
-                <div class="space-y-2">
-                    <div class="flex justify-between">
-                        <span class="text-gray-400">Attendance</span>
-                        <span class="font-semibold {% if report.percentage >= 80 %}text-green-400{% else %}text-red-400{% endif %}">
-                            {{ report.percentage }}%
-                        </span>
-                    </div>
-                    <div class="progress-bar h-3">
-                        <div class="progress-fill" style="width: {{ report.percentage }}%"></div>
-                    </div>
-                </div>
+                        <!-- Progress Bar -->
+                        <div class="mb-3">
+                            <div class="flex justify-between text-xs text-muted mb-1">
+                                <span>Current: {{ data.attendance_percentage }}%</span>
+                                <span>Target: {{ data.subject.required_attendance }}%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill {% if data.attendance_percentage >= data.subject.required_attendance %}bg-green-400{% else %}bg-red-400{% endif %}" 
+                                     style="width: {{ data.attendance_percentage }}%"></div>
+                            </div>
+                        </div>
 
-                {% if report.needed > 0 %}
-                <div class="bg-red-500/10 border border-red-500/30 rounded-lg p-3">
-                    <p class="text-red-400 text-sm">
-                        ⚠️ You need to attend <strong>{{ report.needed }} more classes</strong> to reach {{ report.subject.required_attendance }}% attendance
-                    </p>
+                        <!-- Status and Recommendations -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                            <div class="flex items-center gap-2">
+                                <div class="w-3 h-3 rounded-full {% if data.status == 'Good' %}bg-green-400{% else %}bg-red-400{% endif %}"></div>
+                                <span class="text-muted">Status:</span>
+                                <span class="{% if data.status == 'Good' %}text-green-400{% else %}text-red-400{% endif %} font-medium">{{ data.status }}</span>
+                            </div>
+
+                            {% if data.classes_needed > 0 %}
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="alert-triangle" class="w-4 h-4 text-red-400"></i>
+                                <span class="text-muted">Need:</span>
+                                <span class="text-red-400 font-medium">{{ data.classes_needed }} more classes</span>
+                            </div>
+                            {% else %}
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="check-circle" class="w-4 h-4 text-green-400"></i>
+                                <span class="text-muted">Can miss:</span>
+                                <span class="text-green-400 font-medium">{{ data.classes_to_maintain }} classes</span>
+                            </div>
+                            {% endif %}
+
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="target" class="w-4 h-4 text-muted"></i>
+                                <span class="text-muted">Required:</span>
+                                <span class="text-primary font-medium">{{ data.subject.required_attendance }}%</span>
+                            </div>
+                        </div>
+
+                        <!-- Subject Details -->
+                        {% if data.subject.instructor_name or data.subject.room_number %}
+                        <div class="mt-3 pt-3 border-t border-secondary">
+                            <div class="flex gap-4 text-xs text-muted">
+                                {% if data.subject.instructor_name %}
+                                <div class="flex items-center gap-1">
+                                    <i data-lucide="user" class="w-3 h-3"></i>
+                                    <span>{{ data.subject.instructor_name }}</span>
+                                </div>
+                                {% endif %}
+                                {% if data.subject.room_number %}
+                                <div class="flex items-center gap-1">
+                                    <i data-lucide="map-pin" class="w-3 h-3"></i>
+                                    <span>Room {{ data.subject.room_number }}</span>
+                                </div>
+                                {% endif %}
+                                <div class="flex items-center gap-1">
+                                    <i data-lucide="credit-card" class="w-3 h-3"></i>
+                                    <span>{{ data.subject.credits }} Credits</span>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
                 </div>
-                {% else %}
-                <div class="bg-green-500/10 border border-green-500/30 rounded-lg p-3">
-                    <p class="text-green-400 text-sm">✅ You're meeting the attendance requirement!</p>
-                </div>
-                {% endif %}
             </div>
         </div>
-        {% endfor %}
-    </div>
+    {% else %}
+        <!-- Empty State -->
+        <div class="card">
+            <div class="card-content">
+                <div class="text-center py-12">
+                    <i data-lucide="bar-chart-3" class="w-16 h-16 text-muted mx-auto mb-4"></i>
+                    <h3 class="text-xl font-semibold text-primary mb-2">No Data Available</h3>
+                    <p class="text-muted mb-6">Add subjects and mark attendance to generate reports</p>
+                    <div class="flex gap-3 justify-center">
+                        <a href="{{ url_for('subjects') }}" class="btn btn-primary">
+                            <i data-lucide="book-plus"></i>
+                            Add Subjects
+                        </a>
+                        <a href="{{ url_for('attendance') }}" class="btn btn-secondary">
+                            <i data-lucide="user-check"></i>
+                            Mark Attendance
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
 </div>
 {% endblock %}
